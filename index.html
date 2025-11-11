@@ -65,6 +65,8 @@
 
       const start = (paginaActual - 1) * filasPorPagina;
       const end = start + filasPorPagina;
+      console.log("Datos crudos:", datos);
+
       const paginaDatos = datosFiltrados.slice(start, end);
 
       const thead = document.createElement("tr");
