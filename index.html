@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor de Excel</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
+    th { background: #f0f0f0; font-weight: bold; }
+    .loader { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h2>Visor de datos desde Excel</h2>
+  <p>El sistema carga automáticamente el archivo <b>data/datos.xlsx</b>.</p>
+
+  <div id="loader" class="loader">Cargando datos...</div>
+  <table id="tabla"></table>
+
+  <script>
+    const columnas = [
+      "A", "ID_PACIENTE", "PACIENTE", "MEDICO", "FECHA_CIRUGIA",
+      "PROVEEDOR", "CODIGO_CLINICA", "CODIGO_PROVEEDOR", "CANTIDAD",
+      "PRECIO_UNITARIO", "ATRIBUTO", "OC", "OC_MONTO", "ESTADO",
+      "FECHA_RECEPCION", "FECHA_CARGO", "NUMERO_GUIA", "NUMERO_FACTURA",
+      "FECHA_EMISION", "FECHA_INGRESO", "LOTE", "FECHA_VENCIMIENTO"
+    ];
+
+    async function cargarExcel() {
+      try {
+        const res = await fetch("data/datos.xlsx?nocache=" + Date.now());
+        const buffer = await res.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        const tabla = document.getElementById("tabla");
+        const loader = document.getElementById("loader");
+        loader.style.display = "none";
+
+        tabla.innerHTML = "";
+
+        // Encabezados
+        const thead = document.createElement("tr");
+        columnas.forEach(col => {
+          const th = document.createElement("th");
+          th.textContent = col;
+          thead.appendChild(th);
+        });
+        tabla.appendChild(thead);
+
+        // Filas
+        data.forEach((row, index) => {
+          const tr = document.createElement("tr");
+          columnas.forEach((_, colIndex) => {
+            const td = document.createElement("td");
+            td.textContent = row[colIndex] ?? "";
+            tr.appendChild(td);
+          });
+          tabla.appendChild(tr);
+        });
+
+      } catch (error) {
+        document.getElementById("loader").textContent =
+          "Error al cargar el archivo. Asegúrate de que data/datos.xlsx existe.";
+      }
+    }
+
+    cargarExcel();
+  </script>
+</body>
+</html>
