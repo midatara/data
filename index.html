@@ -9,16 +9,26 @@
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
-    th { background: #f0f0f0; font-weight: bold; }
-    .loader { font-size: 18px; }
+    th { background: #f0f0f0; cursor: pointer; }
+    #search { padding: 8px; width: 250px; margin-top: 10px; }
+    .pagination { margin-top: 10px; }
+    .pagination button { padding: 5px 10px; margin-right: 5px; }
+    .filter-input { width: 100%; box-sizing: border-box; }
   </style>
 </head>
 <body>
   <h2>Visor de datos desde Excel</h2>
-  <p>El sistema carga automáticamente el archivo <b>data/datos.xlsx</b>.</p>
+  <p>Archivo cargado desde <b>data/datos.xlsx</b></p>
 
-  <div id="loader" class="loader">Cargando datos...</div>
+  <input type="text" id="search" placeholder="Buscar..." />
+
+  <div id="loader">Cargando datos...</div>
   <table id="tabla"></table>
+  <div class="pagination">
+    <button id="prev">Anterior</button>
+    <span id="page-info"></span>
+    <button id="next">Siguiente</button>
+  </div>
 
   <script>
     const columnas = [
@@ -29,45 +39,84 @@
       "FECHA_EMISION", "FECHA_INGRESO", "LOTE", "FECHA_VENCIMIENTO"
     ];
 
+    let datos = [];
+    let datosFiltrados = [];
+    let paginaActual = 1;
+    const filasPorPagina = 20;
+
     async function cargarExcel() {
       try {
         const res = await fetch("data/datos.xlsx?nocache=" + Date.now());
         const buffer = await res.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-        const tabla = document.getElementById("tabla");
-        const loader = document.getElementById("loader");
-        loader.style.display = "none";
-
-        tabla.innerHTML = "";
-
-        // Encabezados
-        const thead = document.createElement("tr");
-        columnas.forEach(col => {
-          const th = document.createElement("th");
-          th.textContent = col;
-          thead.appendChild(th);
-        });
-        tabla.appendChild(thead);
-
-        // Filas
-        data.forEach((row, index) => {
-          const tr = document.createElement("tr");
-          columnas.forEach((_, colIndex) => {
-            const td = document.createElement("td");
-            td.textContent = row[colIndex] ?? "";
-            tr.appendChild(td);
-          });
-          tabla.appendChild(tr);
-        });
-
+        datos = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        datosFiltrados = datos;
+        document.getElementById("loader").style.display = "none";
+        renderTabla();
       } catch (error) {
-        document.getElementById("loader").textContent =
-          "Error al cargar el archivo. Asegúrate de que data/datos.xlsx existe.";
+        document.getElementById("loader").textContent = "Error: No se encuentra data/datos.xlsx";
       }
     }
+
+    function renderTabla() {
+      const tabla = document.getElementById("tabla");
+      tabla.innerHTML = "";
+
+      const start = (paginaActual - 1) * filasPorPagina;
+      const end = start + filasPorPagina;
+      const paginaDatos = datosFiltrados.slice(start, end);
+
+      const thead = document.createElement("tr");
+      columnas.forEach((col, idx) => {
+        const th = document.createElement("th");
+        th.textContent = col;
+        th.onclick = () => ordenarPor(idx);
+        thead.appendChild(th);
+      });
+      tabla.appendChild(thead);
+
+      paginaDatos.forEach(row => {
+        const tr = document.createElement("tr");
+        columnas.forEach((_, colIndex) => {
+          const td = document.createElement("td");
+          td.textContent = row[colIndex] ?? "";
+          tr.appendChild(td);
+        });
+        tabla.appendChild(tr);
+      });
+
+      document.getElementById("page-info").textContent = `Página ${paginaActual}`;
+    }
+
+    function ordenarPor(colIndex) {
+      datosFiltrados.sort((a, b) => {
+        return (a[colIndex] ?? "").toString().localeCompare((b[colIndex] ?? "").toString());
+      });
+      paginaActual = 1;
+      renderTabla();
+    }
+
+    document.getElementById("search").addEventListener("input", function() {
+      const q = this.value.toLowerCase();
+      datosFiltrados = datos.filter(row => row.some(c => (c + "").toLowerCase().includes(q)));
+      paginaActual = 1;
+      renderTabla();
+    });
+
+    document.getElementById("prev").onclick = function() {
+      if (paginaActual > 1) {
+        paginaActual--;
+        renderTabla();
+      }
+    };
+
+    document.getElementById("next").onclick = function() {
+      if (paginaActual * filasPorPagina < datosFiltrados.length) {
+        paginaActual++;
+        renderTabla();
+      }
+    };
 
     cargarExcel();
   </script>
