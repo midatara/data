@@ -6,28 +6,162 @@
   <title>Visor de Excel</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
-    th { background: #f0f0f0; cursor: pointer; }
-    #search { padding: 8px; width: 250px; margin-top: 10px; }
-    .pagination { margin-top: 10px; }
-    .pagination button { padding: 5px 10px; margin-right: 5px; }
-    .filter-input { width: 100%; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px;
+      background: white;
+    }
+    th, td { 
+      border: 1px solid #ddd; 
+      padding: 8px; 
+      font-size: 13px;
+      text-align: left;
+    }
+    th { 
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th:hover {
+      background: #45a049;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    tr:hover {
+      background: #f0f0f0;
+    }
+    #search { 
+      padding: 10px; 
+      width: 300px; 
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    #search:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    .pagination { 
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pagination button { 
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .pagination button:hover {
+      background: #45a049;
+    }
+    .pagination button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #loader {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #666;
+    }
+    .error {
+      background: #f44336;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .success {
+      background: #4CAF50;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .info {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .file-upload {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      text-align: center;
+      background: #fafafa;
+    }
+    .file-upload input {
+      display: none;
+    }
+    .file-upload label {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .file-upload label:hover {
+      background: #45a049;
+    }
   </style>
 </head>
 <body>
-  <h2>Visor de datos desde Excel</h2>
-  <p>Archivo cargado desde <b>data/datos.xlsx</b></p>
+  <div class="container">
+    <h2>📊 Visor de Datos Excel</h2>
+    
+    <div class="file-upload">
+      <p>Selecciona tu archivo Excel (datos.xlsx)</p>
+      <label for="file-input">📁 Elegir archivo</label>
+      <input type="file" id="file-input" accept=".xlsx,.xls" />
+      <p style="font-size: 12px; color: #999; margin-top: 10px;">O coloca el archivo en: data/datos.xlsx</p>
+    </div>
 
-  <input type="text" id="search" placeholder="Buscar..." />
+    <div id="message"></div>
 
-  <div id="loader">Cargando datos...</div>
-  <table id="tabla"></table>
-  <div class="pagination">
-    <button id="prev">Anterior</button>
-    <span id="page-info"></span>
-    <button id="next">Siguiente</button>
+    <input type="text" id="search" placeholder="🔍 Buscar en todos los campos..." />
+
+    <div class="info">
+      <span id="total-registros"></span>
+      <span id="page-info"></span>
+    </div>
+
+    <div id="loader">Cargando datos...</div>
+    <div style="overflow-x: auto;">
+      <table id="tabla"></table>
+    </div>
+    
+    <div class="pagination">
+      <button id="prev">⬅️ Anterior</button>
+      <button id="next">Siguiente ➡️</button>
+    </div>
   </div>
 
   <script>
@@ -42,58 +176,126 @@
     let datos = [];
     let datosFiltrados = [];
     let paginaActual = 1;
-    const filasPorPagina = 20;
+    const filasPorPagina = 50;
+
+    function mostrarMensaje(texto, tipo) {
+      const msg = document.getElementById("message");
+      msg.className = tipo;
+      msg.textContent = texto;
+      msg.style.display = "block";
+      setTimeout(() => {
+        msg.style.display = "none";
+      }, 5000);
+    }
 
     async function cargarExcel() {
       try {
-        const res = await fetch("data/datos.xlsx?nocache=" + Date.now());
+        const res = await fetch("data/datos.xlsx");
+        
+        if (!res.ok) {
+          throw new Error("Archivo no encontrado");
+        }
+        
         const buffer = await res.arrayBuffer();
+        procesarExcel(buffer);
+        mostrarMensaje("✅ Archivo cargado exitosamente desde data/datos.xlsx", "success");
+      } catch (error) {
+        document.getElementById("loader").innerHTML = 
+          `<p style="color: #f44336;">❌ No se pudo cargar data/datos.xlsx</p>
+           <p style="font-size: 14px;">Por favor, usa el selector de archivos arriba para cargar tu Excel.</p>`;
+        console.error("Error:", error);
+      }
+    }
+
+    function procesarExcel(buffer) {
+      try {
         const workbook = XLSX.read(buffer, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        datos = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const datosRaw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        // Filtrar filas vacías
+        datos = datosRaw.filter(row => row && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
+        
+        console.log(`✅ Datos cargados: ${datos.length} filas`);
+        
         datosFiltrados = datos;
         document.getElementById("loader").style.display = "none";
+        actualizarInfo();
         renderTabla();
       } catch (error) {
-        document.getElementById("loader").textContent = "Error: No se encuentra data/datos.xlsx";
+        mostrarMensaje("❌ Error al procesar el archivo Excel", "error");
+        console.error("Error procesando Excel:", error);
       }
+    }
+
+    // Selector de archivos
+    document.getElementById("file-input").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        procesarExcel(e.target.result);
+        mostrarMensaje(`✅ Archivo "${file.name}" cargado exitosamente`, "success");
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function actualizarInfo() {
+      document.getElementById("total-registros").textContent = 
+        `Total: ${datosFiltrados.length} registros`;
     }
 
     function renderTabla() {
       const tabla = document.getElementById("tabla");
       tabla.innerHTML = "";
 
-      const start = (paginaActual - 1) * filasPorPagina;
-      const end = start + filasPorPagina;
-      console.log("Datos crudos:", datos);
+      if (datosFiltrados.length === 0) {
+        tabla.innerHTML = "<tr><td colspan='22' style='text-align:center; padding:40px;'>No hay datos para mostrar</td></tr>";
+        return;
+      }
 
+      const start = (paginaActual - 1) * filasPorPagina;
+      const end = Math.min(start + filasPorPagina, datosFiltrados.length);
       const paginaDatos = datosFiltrados.slice(start, end);
 
+      // Encabezados
       const thead = document.createElement("tr");
       columnas.forEach((col, idx) => {
         const th = document.createElement("th");
         th.textContent = col;
+        th.title = "Click para ordenar";
         th.onclick = () => ordenarPor(idx);
         thead.appendChild(th);
       });
       tabla.appendChild(thead);
 
+      // Datos
       paginaDatos.forEach(row => {
         const tr = document.createElement("tr");
         columnas.forEach((_, colIndex) => {
           const td = document.createElement("td");
-          td.textContent = row[colIndex] ?? "";
+          const valor = row[colIndex];
+          td.textContent = valor !== null && valor !== undefined ? valor : "";
           tr.appendChild(td);
         });
         tabla.appendChild(tr);
       });
 
-      document.getElementById("page-info").textContent = `Página ${paginaActual}`;
+      // Actualizar paginación
+      const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
+      document.getElementById("page-info").textContent = 
+        `Página ${paginaActual} de ${totalPaginas}`;
+      
+      document.getElementById("prev").disabled = paginaActual === 1;
+      document.getElementById("next").disabled = paginaActual >= totalPaginas;
     }
 
     function ordenarPor(colIndex) {
       datosFiltrados.sort((a, b) => {
-        return (a[colIndex] ?? "").toString().localeCompare((b[colIndex] ?? "").toString());
+        const valA = a[colIndex] ?? "";
+        const valB = b[colIndex] ?? "";
+        return valA.toString().localeCompare(valB.toString(), undefined, {numeric: true});
       });
       paginaActual = 1;
       renderTabla();
@@ -101,8 +303,15 @@
 
     document.getElementById("search").addEventListener("input", function() {
       const q = this.value.toLowerCase();
-      datosFiltrados = datos.filter(row => row.some(c => (c + "").toLowerCase().includes(q)));
+      if (q === "") {
+        datosFiltrados = datos;
+      } else {
+        datosFiltrados = datos.filter(row => 
+          row.some(c => (c + "").toLowerCase().includes(q))
+        );
+      }
       paginaActual = 1;
+      actualizarInfo();
       renderTabla();
     });
 
@@ -110,16 +319,20 @@
       if (paginaActual > 1) {
         paginaActual--;
         renderTabla();
+        window.scrollTo(0, 0);
       }
     };
 
     document.getElementById("next").onclick = function() {
-      if (paginaActual * filasPorPagina < datosFiltrados.length) {
+      const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
+      if (paginaActual < totalPaginas) {
         paginaActual++;
         renderTabla();
+        window.scrollTo(0, 0);
       }
     };
 
+    // Intentar cargar automáticamente desde data/datos.xlsx
     cargarExcel();
   </script>
 </body>
