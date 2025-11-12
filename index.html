@@ -8,25 +8,36 @@
   <style>
     body { 
       font-family: Arial, sans-serif; 
-      padding: 20px;
       background: #f5f5f5;
       margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
     }
     .container {
-      max-width: 95%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 100%;
       margin: 0 auto;
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px 20px;
+      box-sizing: border-box;
+    }
+    .header-section {
+      flex-shrink: 0;
     }
     .table-container {
-      height: 600px;
+      flex: 1;
       overflow: auto;
       border: 2px solid #ddd;
       border-radius: 4px;
-      margin-top: 20px;
+      margin: 10px 0;
       position: relative;
+      min-height: 0;
+    }
+    .footer-section {
+      flex-shrink: 0;
     }
     table { 
       border-collapse: collapse; 
@@ -192,7 +203,7 @@
     </div>
 
     <div id="loader">Cargando datos...</div>
-    <div style="overflow-x: auto;">
+    <div class="table-container">
       <table id="tabla"></table>
     </div>
     
@@ -309,28 +320,48 @@
       const end = Math.min(start + filasPorPagina, datosFiltrados.length);
       const paginaDatos = datosFiltrados.slice(start, end);
 
-      // Encabezados
-      const thead = document.createElement("tr");
+      // Crear thead
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      
       columnas.forEach((col, idx) => {
         const th = document.createElement("th");
         th.textContent = col;
-        th.title = "Click para ordenar";
-        th.onclick = () => ordenarPor(idx);
-        thead.appendChild(th);
+        th.title = "Click para ordenar | Arrastra el borde para redimensionar";
+        th.onclick = (e) => {
+          if (!e.target.classList.contains('resizer')) {
+            ordenarPor(idx);
+          }
+        };
+        
+        // Agregar redimensionador
+        const resizer = document.createElement("div");
+        resizer.className = "resizer";
+        th.appendChild(resizer);
+        
+        headerRow.appendChild(th);
       });
+      thead.appendChild(headerRow);
       tabla.appendChild(thead);
 
-      // Datos
+      // Crear tbody
+      const tbody = document.createElement("tbody");
       paginaDatos.forEach(row => {
         const tr = document.createElement("tr");
         columnas.forEach((_, colIndex) => {
           const td = document.createElement("td");
           const valor = row[colIndex];
-          td.textContent = valor !== null && valor !== undefined ? valor : "";
+          // Convertir todo a string en una sola línea
+          const textoLimpio = valor !== null && valor !== undefined 
+            ? String(valor).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+            : "";
+          td.textContent = textoLimpio;
+          td.title = textoLimpio; // Tooltip con el texto completo
           tr.appendChild(td);
         });
-        tabla.appendChild(tr);
+        tbody.appendChild(tr);
       });
+      tabla.appendChild(tbody);
 
       // Actualizar paginación
       const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
@@ -339,6 +370,49 @@
       
       document.getElementById("prev").disabled = paginaActual === 1;
       document.getElementById("next").disabled = paginaActual >= totalPaginas;
+      
+      // Inicializar redimensionamiento de columnas
+      initColumnResize();
+    }
+
+    // Función para redimensionar columnas
+    function initColumnResize() {
+      const resizers = document.querySelectorAll('.resizer');
+      let currentResizer;
+      let currentTh;
+      let startX;
+      let startWidth;
+
+      resizers.forEach(resizer => {
+        resizer.addEventListener('mousedown', function(e) {
+          e.stopPropagation();
+          currentResizer = this;
+          currentTh = this.parentElement;
+          startX = e.pageX;
+          startWidth = currentTh.offsetWidth;
+          
+          document.addEventListener('mousemove', resize);
+          document.addEventListener('mouseup', stopResize);
+        });
+      });
+
+      function resize(e) {
+        if (currentTh) {
+          const width = startWidth + (e.pageX - startX);
+          if (width > 50) { // Ancho mínimo
+            currentTh.style.width = width + 'px';
+            currentTh.style.minWidth = width + 'px';
+            currentTh.style.maxWidth = width + 'px';
+          }
+        }
+      }
+
+      function stopResize() {
+        document.removeEventListener('mousemove', resize);
+        document.removeEventListener('mouseup', stopResize);
+        currentResizer = null;
+        currentTh = null;
+      }
     }
 
     function ordenarPor(colIndex) {
@@ -369,7 +443,7 @@
       if (paginaActual > 1) {
         paginaActual--;
         renderTabla();
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
 
@@ -378,7 +452,7 @@
       if (paginaActual < totalPaginas) {
         paginaActual++;
         renderTabla();
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
 
