@@ -137,11 +137,10 @@
   <div class="container">
     <h2>📊 Visor de Datos Excel</h2>
     
-    <div class="file-upload">
-      <p>Selecciona tu archivo Excel (datos.xlsx)</p>
-      <label for="file-input">📁 Elegir archivo</label>
+    <div class="file-upload" id="file-upload-section" style="display: none;">
+      <p>⚠️ No se pudo cargar el archivo automáticamente</p>
+      <label for="file-input">📁 Cargar archivo manualmente</label>
       <input type="file" id="file-input" accept=".xlsx,.xls" />
-      <p style="font-size: 12px; color: #999; margin-top: 10px;">O coloca el archivo en: data/datos.xlsx</p>
     </div>
 
     <div id="message"></div>
