@@ -24,9 +24,6 @@
       padding: 15px 20px;
       box-sizing: border-box;
     }
-    .header-section {
-      flex-shrink: 0;
-    }
     .table-container {
       flex: 1;
       overflow: auto;
@@ -35,9 +32,6 @@
       margin: 10px 0;
       position: relative;
       min-height: 0;
-    }
-    .footer-section {
-      flex-shrink: 0;
     }
     table { 
       border-collapse: collapse; 
@@ -67,9 +61,7 @@
       font-weight: bold;
       user-select: none;
     }
-    th:hover {
-      background: #45a049;
-    }
+    th:hover { background: #45a049; }
     th .resizer {
       position: absolute;
       top: 0;
@@ -80,18 +72,10 @@
       background: rgba(255,255,255,0.2);
       z-index: 11;
     }
-    th .resizer:hover {
-      background: rgba(255,255,255,0.5);
-    }
-    tbody tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-    tbody tr:hover {
-      background: #e8f5e9;
-    }
-    td {
-      cursor: default;
-    }
+    th .resizer:hover { background: rgba(255,255,255,0.5); }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    tbody tr:hover { background: #e8f5e9; }
+    td { cursor: default; }
     td:hover {
       background: #fff9c4;
       overflow: visible;
@@ -106,10 +90,7 @@
       border-radius: 4px;
       font-size: 14px;
     }
-    #search:focus {
-      outline: none;
-      border-color: #4CAF50;
-    }
+    #search:focus { outline: none; border-color: #4CAF50; }
     .pagination { 
       margin-top: 20px;
       display: flex;
@@ -125,40 +106,12 @@
       cursor: pointer;
       font-size: 14px;
     }
-    .pagination button:hover {
-      background: #45a049;
-    }
-    .pagination button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    #loader {
-      text-align: center;
-      padding: 40px;
-      font-size: 18px;
-      color: #666;
-    }
-    .error {
-      background: #f44336;
-      color: white;
-      padding: 15px;
-      border-radius: 4px;
-      margin: 10px 0;
-    }
-    .success {
-      background: #4CAF50;
-      color: white;
-      padding: 15px;
-      border-radius: 4px;
-      margin: 10px 0;
-    }
-    .info {
-      display: flex;
-      justify-content: space-between;
-      margin: 10px 0;
-      font-size: 14px;
-      color: #666;
-    }
+    .pagination button:hover { background: #45a049; }
+    .pagination button:disabled { background: #ccc; cursor: not-allowed; }
+    #loader { text-align: center; padding: 40px; font-size: 18px; color: #666; }
+    .error { background: #f44336; color: white; padding: 15px; border-radius: 4px; margin: 10px 0; }
+    .success { background: #4CAF50; color: white; padding: 15px; border-radius: 4px; margin: 10px 0; }
+    .info { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; color: #666; }
     .file-upload {
       margin: 20px 0;
       padding: 20px;
@@ -167,9 +120,7 @@
       text-align: center;
       background: #fafafa;
     }
-    .file-upload input {
-      display: none;
-    }
+    .file-upload input { display: none; }
     .file-upload label {
       padding: 10px 20px;
       background: #4CAF50;
@@ -178,24 +129,22 @@
       cursor: pointer;
       display: inline-block;
     }
-    .file-upload label:hover {
-      background: #45a049;
-    }
+    .file-upload label:hover { background: #45a049; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📊 Visor de Datos Excel</h2>
+    <h2>Visor de Datos Excel</h2>
     
     <div class="file-upload" id="file-upload-section" style="display: none;">
-      <p>⚠️ No se pudo cargar el archivo automáticamente</p>
-      <label for="file-input">📁 Cargar archivo manualmente</label>
+      <p>No se pudo cargar el archivo automáticamente</p>
+      <label for="file-input">Cargar archivo manualmente</label>
       <input type="file" id="file-input" accept=".xlsx,.xls" />
     </div>
 
     <div id="message"></div>
 
-    <input type="text" id="search" placeholder="🔍 Buscar en todos los campos..." />
+    <input type="text" id="search" placeholder="Buscar en todos los campos..." />
 
     <div class="info">
       <span id="total-registros"></span>
@@ -208,8 +157,8 @@
     </div>
     
     <div class="pagination">
-      <button id="prev">⬅️ Anterior</button>
-      <button id="next">Siguiente ➡️</button>
+      <button id="prev">Anterior</button>
+      <button id="next">Siguiente</button>
     </div>
   </div>
 
@@ -232,31 +181,23 @@
       msg.className = tipo;
       msg.textContent = texto;
       msg.style.display = "block";
-      setTimeout(() => {
-        msg.style.display = "none";
-      }, 5000);
+      setTimeout(() => msg.style.display = "none", 5000);
     }
 
     async function cargarExcel() {
       try {
-        // Intenta cargar desde la carpeta data
         const res = await fetch("data/datos.xlsx?v=" + Date.now());
-        
-        if (!res.ok) {
-          throw new Error("Archivo no encontrado");
-        }
-        
+        if (!res.ok) throw new Error("Archivo no encontrado");
         const buffer = await res.arrayBuffer();
         procesarExcel(buffer);
-        mostrarMensaje("✅ Datos cargados exitosamente (18,000+ registros)", "success");
+        mostrarMensaje("Datos cargados exitosamente (18,000+ registros)", "success");
       } catch (error) {
-        // Si no encuentra el archivo, muestra el selector manual
         document.getElementById("loader").innerHTML = 
-          `<div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
-            <h3 style="margin-top:0; color: #856404;">⚠️ Archivo no encontrado</h3>
-            <p style="color: #856404; margin: 10px 0;">El archivo <code>data/datos.xlsx</code> no está disponible.</p>
-            <p style="color: #856404; margin: 10px 0;"><strong>Para que funcione automáticamente:</strong></p>
-            <ol style="color: #856404; text-align: left; max-width: 600px; margin: 0 auto;">
+          `<div style="background:#fff3cd;padding:20px;border-radius:8px;border-left:4px solid #ffc107;">
+            <h3 style="margin-top:0;color:#856404;">Archivo no encontrado</h3>
+            <p style="color:#856404;margin:10px 0;">El archivo <code>data/datos.xlsx</code> no está disponible.</p>
+            <p style="color:#856404;margin:10px 0;"><strong>Para que funcione automáticamente:</strong></p>
+            <ol style="color:#856404;text-align:left;max-width:600px;margin:0 auto;">
               <li>Sube este proyecto a <strong>GitHub</strong></li>
               <li>Incluye la carpeta <code>data/</code> con el archivo <code>datos.xlsx</code></li>
               <li>Activa <strong>GitHub Pages</strong> en Settings → Pages</li>
@@ -264,55 +205,44 @@
             </ol>
           </div>`;
         document.getElementById("file-upload-section").style.display = "block";
-        console.error("Error cargando archivo:", error);
       }
     }
 
     function procesarExcel(buffer) {
       try {
-        const workbook = XLSX.read(buffer, { type: "array" });
+        const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const datosRaw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        
-        // Filtrar filas vacías
         datos = datosRaw.filter(row => row && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
-        
-        console.log(`✅ Datos cargados: ${datos.length} filas`);
-        
         datosFiltrados = datos;
         document.getElementById("loader").style.display = "none";
         actualizarInfo();
         renderTabla();
       } catch (error) {
-        mostrarMensaje("❌ Error al procesar el archivo Excel", "error");
-        console.error("Error procesando Excel:", error);
+        mostrarMensaje("Error al procesar el archivo Excel", "error");
       }
     }
 
-    // Selector de archivos
     document.getElementById("file-input").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         procesarExcel(e.target.result);
-        mostrarMensaje(`✅ Archivo "${file.name}" cargado exitosamente`, "success");
+        mostrarMensaje(`Archivo "${file.name}" cargado exitosamente`, "success");
       };
       reader.readAsArrayBuffer(file);
     });
 
     function actualizarInfo() {
-      document.getElementById("total-registros").textContent = 
-        `Total: ${datosFiltrados.length} registros`;
+      document.getElementById("total-registros").textContent = `Total: ${datosFiltrados.length} registros`;
     }
 
     function renderTabla() {
       const tabla = document.getElementById("tabla");
       tabla.innerHTML = "";
-
       if (datosFiltrados.length === 0) {
-        tabla.innerHTML = "<tr><td colspan='22' style='text-align:center; padding:40px;'>No hay datos para mostrar</td></tr>";
+        tabla.innerHTML = "<tr><td colspan='22' style='text-align:center;padding:40px;'>No hay datos para mostrar</td></tr>";
         return;
       }
 
@@ -320,69 +250,56 @@
       const end = Math.min(start + filasPorPagina, datosFiltrados.length);
       const paginaDatos = datosFiltrados.slice(start, end);
 
-      // Crear thead
       const thead = document.createElement("thead");
       const headerRow = document.createElement("tr");
-      
       columnas.forEach((col, idx) => {
         const th = document.createElement("th");
         th.textContent = col;
         th.title = "Click para ordenar | Arrastra el borde para redimensionar";
-        th.onclick = (e) => {
-          if (!e.target.classList.contains('resizer')) {
-            ordenarPor(idx);
-          }
-        };
-        
-        // Agregar redimensionador
+        th.onclick = (e) => { if (!e.target.classList.contains('resizer')) ordenarPor(idx); };
         const resizer = document.createElement("div");
         resizer.className = "resizer";
         th.appendChild(resizer);
-        
         headerRow.appendChild(th);
       });
       thead.appendChild(headerRow);
       tabla.appendChild(thead);
 
-      // Crear tbody
       const tbody = document.createElement("tbody");
       paginaDatos.forEach(row => {
         const tr = document.createElement("tr");
         columnas.forEach((_, colIndex) => {
           const td = document.createElement("td");
           const valor = row[colIndex];
-          // Convertir todo a string en una sola línea
-          const textoLimpio = valor !== null && valor !== undefined 
-            ? String(valor).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
-            : "";
+          let textoLimpio = "";
+          if (valor !== null && valor !== undefined) {
+            if (valor instanceof Date && !isNaN(valor)) {
+              const dia = String(valor.getDate()).padStart(2, '0');
+              const mes = String(valor.getMonth() + 1).padStart(2, '0');
+              const año = valor.getFullYear();
+              textoLimpio = `${dia}/${mes}/${año}`;
+            } else {
+              textoLimpio = String(valor).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+          }
           td.textContent = textoLimpio;
-          td.title = textoLimpio; // Tooltip con el texto completo
+          td.title = textoLimpio;
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
       });
       tabla.appendChild(tbody);
 
-      // Actualizar paginación
       const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
-      document.getElementById("page-info").textContent = 
-        `Página ${paginaActual} de ${totalPaginas}`;
-      
+      document.getElementById("page-info").textContent = `Página ${paginaActual} de ${totalPaginas}`;
       document.getElementById("prev").disabled = paginaActual === 1;
       document.getElementById("next").disabled = paginaActual >= totalPaginas;
-      
-      // Inicializar redimensionamiento de columnas
       initColumnResize();
     }
 
-    // Función para redimensionar columnas
     function initColumnResize() {
       const resizers = document.querySelectorAll('.resizer');
-      let currentResizer;
-      let currentTh;
-      let startX;
-      let startWidth;
-
+      let currentResizer, currentTh, startX, startWidth;
       resizers.forEach(resizer => {
         resizer.addEventListener('mousedown', function(e) {
           e.stopPropagation();
@@ -390,23 +307,20 @@
           currentTh = this.parentElement;
           startX = e.pageX;
           startWidth = currentTh.offsetWidth;
-          
           document.addEventListener('mousemove', resize);
           document.addEventListener('mouseup', stopResize);
         });
       });
-
       function resize(e) {
         if (currentTh) {
           const width = startWidth + (e.pageX - startX);
-          if (width > 50) { // Ancho mínimo
+          if (width > 50) {
             currentTh.style.width = width + 'px';
             currentTh.style.minWidth = width + 'px';
             currentTh.style.maxWidth = width + 'px';
           }
         }
       }
-
       function stopResize() {
         document.removeEventListener('mousemove', resize);
         document.removeEventListener('mouseup', stopResize);
@@ -427,13 +341,9 @@
 
     document.getElementById("search").addEventListener("input", function() {
       const q = this.value.toLowerCase();
-      if (q === "") {
-        datosFiltrados = datos;
-      } else {
-        datosFiltrados = datos.filter(row => 
-          row.some(c => (c + "").toLowerCase().includes(q))
-        );
-      }
+      datosFiltrados = q === "" ? datos : datos.filter(row => 
+        row.some(c => (c + "").toLowerCase().includes(q))
+      );
       paginaActual = 1;
       actualizarInfo();
       renderTabla();
@@ -456,7 +366,6 @@
       }
     };
 
-    // Intentar cargar automáticamente desde data/datos.xlsx
     cargarExcel();
   </script>
 </body>
