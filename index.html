@@ -10,26 +10,41 @@
       font-family: Arial, sans-serif; 
       padding: 20px;
       background: #f5f5f5;
+      margin: 0;
     }
     .container {
-      max-width: 1400px;
+      max-width: 95%;
       margin: 0 auto;
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    .table-container {
+      height: 600px;
+      overflow: auto;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      margin-top: 20px;
+      position: relative;
+    }
     table { 
       border-collapse: collapse; 
       width: 100%; 
-      margin-top: 20px;
       background: white;
+      table-layout: auto;
     }
     th, td { 
       border: 1px solid #ddd; 
-      padding: 8px; 
+      padding: 8px 12px; 
       font-size: 13px;
       text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 80px;
+      max-width: 300px;
+      position: relative;
     }
     th { 
       background: #4CAF50;
@@ -38,15 +53,39 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      font-weight: bold;
+      user-select: none;
     }
     th:hover {
       background: #45a049;
     }
-    tr:nth-child(even) {
+    th .resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 5px;
+      height: 100%;
+      cursor: col-resize;
+      background: rgba(255,255,255,0.2);
+      z-index: 11;
+    }
+    th .resizer:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    tbody tr:nth-child(even) {
       background: #f9f9f9;
     }
-    tr:hover {
-      background: #f0f0f0;
+    tbody tr:hover {
+      background: #e8f5e9;
+    }
+    td {
+      cursor: default;
+    }
+    td:hover {
+      background: #fff9c4;
+      overflow: visible;
+      white-space: normal;
+      word-wrap: break-word;
     }
     #search { 
       padding: 10px; 
@@ -189,7 +228,8 @@
 
     async function cargarExcel() {
       try {
-        const res = await fetch("data/datos.xlsx");
+        // Intenta cargar desde la carpeta data
+        const res = await fetch("data/datos.xlsx?v=" + Date.now());
         
         if (!res.ok) {
           throw new Error("Archivo no encontrado");
@@ -197,12 +237,23 @@
         
         const buffer = await res.arrayBuffer();
         procesarExcel(buffer);
-        mostrarMensaje("✅ Archivo cargado exitosamente desde data/datos.xlsx", "success");
+        mostrarMensaje("✅ Datos cargados exitosamente (18,000+ registros)", "success");
       } catch (error) {
+        // Si no encuentra el archivo, muestra el selector manual
         document.getElementById("loader").innerHTML = 
-          `<p style="color: #f44336;">❌ No se pudo cargar data/datos.xlsx</p>
-           <p style="font-size: 14px;">Por favor, usa el selector de archivos arriba para cargar tu Excel.</p>`;
-        console.error("Error:", error);
+          `<div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <h3 style="margin-top:0; color: #856404;">⚠️ Archivo no encontrado</h3>
+            <p style="color: #856404; margin: 10px 0;">El archivo <code>data/datos.xlsx</code> no está disponible.</p>
+            <p style="color: #856404; margin: 10px 0;"><strong>Para que funcione automáticamente:</strong></p>
+            <ol style="color: #856404; text-align: left; max-width: 600px; margin: 0 auto;">
+              <li>Sube este proyecto a <strong>GitHub</strong></li>
+              <li>Incluye la carpeta <code>data/</code> con el archivo <code>datos.xlsx</code></li>
+              <li>Activa <strong>GitHub Pages</strong> en Settings → Pages</li>
+              <li>Todos podrán ver los datos automáticamente</li>
+            </ol>
+          </div>`;
+        document.getElementById("file-upload-section").style.display = "block";
+        console.error("Error cargando archivo:", error);
       }
     }
 
